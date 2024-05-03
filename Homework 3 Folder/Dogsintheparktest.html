@@ -59,7 +59,7 @@
                 .attr("transform", "translate(" + margin + ",0)")
                 .call(leftAxis);
 
-            const lineGenerators = columnsToPlot.map(column => d3.line().x(d => xScale(parseTime(d.date))).y(d => yScale(d[column])));
+           const lineGenerators = columnsToPlot.map(column => d3.line().x(d => xScale(parseTime(d.date))).y(d => yScale(d[column])));
 
             const lines = svg.selectAll(".line")
                 .data(columnsToPlot) 
@@ -68,6 +68,25 @@
                 .attr("class", "line") 
                 .attr("d", (column, i) => lineGenerators[i](data)) 
                 .style("stroke", (d, i) => d3.schemeCategory10[i]); 
+
+            const legend = svg.selectAll(".legend")
+                .data(columnsToPlot)
+                .enter().append("g")
+                .attr("class", "legend")
+                .attr("transform", (d, i) => `translate(0,${i * 20})`); 
+
+            legend.append("rect")
+                .attr("x", w - 18)
+                .attr("width", 18)
+                .attr("height", 18)
+                .style("fill", (d, i) => d3.schemeCategory10[i]);
+
+            legend.append("text")
+                .attr("x", w - 24)
+                .attr("y", 9)
+                .attr("dy", ".35em")
+                .style("text-anchor", "end")
+                .text(d => d); 
         });
         </script>
     </body>
