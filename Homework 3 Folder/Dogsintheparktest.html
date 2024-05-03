@@ -48,10 +48,16 @@
             const svg = d3.select("body").append("svg").attr("width", w).attr("height", h + 100);
 
             const bottomAxis = d3.axisBottom().scale(xScale).tickFormat(d3.timeFormat("%b%d"));
-            svg.append("g").attr("class", "axis").attr("transform", "translate(0," + (h-margin) + ")").call(bottomAxis);
+            svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(0," + (h-margin) + ")")
+                .call(bottomAxis);
 
             const leftAxis = d3.axisLeft().scale(yScale);
-            svg.append("g").attr("class", "axis").attr("transform", "translate(" + margin + ",0)").call(leftAxis);
+            svg.append("g")
+                .attr("class", "axis")
+                .attr("transform", "translate(" + margin + ",0)")
+                .call(leftAxis);
 
             const lineGenerators = columnsToPlot.map(column => d3.line().x(d => xScale(parseTime(d.date))).y(d => yScale(d[column])));
 
