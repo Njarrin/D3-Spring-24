@@ -38,74 +38,31 @@
 
             
             d3.csv("Dogsinthepark.csv").then(data => {
-            console.log("data", data)
-                
-                data.forEach(d => { 
-                d.date = parseTime(d.date);//parse this time data
-                d.max = +d.max;
-                d.min = +d.min;
-                d.avg = +d.avg;    
-                });
-            
-            //scales - with Scale Time
-            const xScale = d3.scaleTime()
-                             .domain(d3.extent(data, d => d.date)) 
-                             .range([margin, w-margin]); 
+            const columnsToPlot = ['max', 'min', 'avg'];
+            const overallMin = d3.min(data, d => d3.min(columnsToPlot, col => +d[col])); 
+            const overallMax = d3.max(data, d => d3.max(columnsToPlot, col => +d[col])); 
 
-            const yScale = d3.scaleLinear()
-                             .domain([0, d3.max(data, d => d.avg)]) 
-                             .range([h-margin, margin]); 
+            const xScale = d3.scaleTime().domain(d3.extent(data, d => parseTime(d.date))).range([margin, w - margin]); 
+            const yScale = d3.scaleLinear().domain([overallMin, overallMax]).range([h - margin, margin]); 
 
-            //SVG
-            const svg = d3.select("body")
-                    .append("svg")
-                    .attr("width", w)
-                    .attr("height", h+100);
+            const svg = d3.select("body").append("svg").attr("width", w).attr("height", h + 100);
 
+            const bottomAxis = d3.axisBottom().scale(xScale).tickFormat(d3.timeFormat("%b%d"));
+            svg.append("g").attr("class", "axis").attr("transform", "translate(0," + (h-margin) + ")").call(bottomAxis);
 
-            //bottom axis with tick time formatting
-            const bottomAxis = d3.axisBottom()
-                                .scale(xScale)
-                                .tickFormat(d3.timeFormat("%b%d"));
-                                //.tickFormat(d3.timeFormat("%b-%Y"))
-                                //.ticks(d3.timeMonth.every(2));
-                                //.ticks(4);
-             
-            svg.append("g")
-                .attr("class", "axis") 
-                .attr("transform", "translate(0," + (h-margin) + ")") 
-                .call(bottomAxis);
-            
-            //left axis
-            const leftAxis = d3.axisLeft()
-                             .scale(yScale);
-                             //.ticks(4);
-            
-            svg.append("g")
-               .attr("class", "axis") 
-               .attr("transform", "translate(" + margin + ",0)")
-               .call(leftAxis);
+            const leftAxis = d3.axisLeft().scale(yScale);
+            svg.append("g").attr("class", "axis").attr("transform", "translate(" + margin + ",0)").call(leftAxis);
 
+            const lineGenerators = columnsToPlot.map(column => d3.line().x(d => xScale(parseTime(d.date))).y(d => yScale(d[column])));
 
-            //line generator with optional curves
-            const line = d3.line()
-                            //.curve(d3.curveStepAfter)
-                            //.curve(d3.curveBasis)
-                            //.curve(d3.curveNatural)
-                            .x(d=>xScale(d.date))
-                            .y(d=>yScale(d.avg));
-           
-            //line
-            svg.append("path")
-                //.data([data])
-                //.attr("d", line)
-                .attr("d", line(data))
-                .attr("class", "line")
-                //.style("stroke", "green");//inline styling vs CSS
-               //.attr("stroke", "purple");
-                console.log("path",line(data))
-            
-            });
+            const lines = svg.selectAll(".line")
+                .data(columnsToPlot) 
+                .enter() 
+                .append("path") 
+                .attr("class", "line") 
+                .attr("d", (column, i) => lineGenerators[i](data)) 
+                .style("stroke", (d, i) => d3.schemeCategory10[i]); 
+        });
         </script>
     </body>
 </html>
