@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>Stacked Bars</title>
+        <script src= "https://d3js.org/d3.v7.min.js"></script>
+        <style type="text/css">
+            
+  		/*TBD*/
+
+        </style>
+    </head>
+    <body>
+        <script type="text/javascript">
+           
+            const w = 600;
+            const h = 600;
+            const margin = 80;
+            const parseTime = d3.timeParse("%Y-%m");
+            const myColor = d3.scaleOrdinal(d3.schemeTableau10);
+
+            //data
+            d3.csv("dog_counts.csv").then(data => {
+                console.log("data", data)
+
+                data.forEach(d => { 
+                d.month = parseTime(d.month);
+                d.num_small_dogs = +d.num_small_dogs;
+                d.num_medium_dogs = +d.num_medium_dogs;
+                d.num_large_dogs = +d.num_large_dogs;
+                });
+
+            const stack = d3.stack()
+                            .keys(["num_small_dogs", "num_medium_dogs", "num_large_dogs"]); 
+            
+            
+            const series = stack(data);
+                console.log("stacked data", series);
+                     
+            const xScale = d3.scaleBand()
+                             .domain(data.map(d=>d.month))
+                             .range([margin, w - margin])
+                             .paddingInner(0.05);
+
+            const yScale = d3.scaleLinear()
+                             .domain([-0, d3.max(data, d => d.num_small_dogs + d.num_medium_dogs + d.num_large_dogs)])
+                             .range([h - margin, margin]);
+            
+            const svg = d3.select("body")
+                            .append("svg")
+                            .attr("width", w)
+                            .attr("height", h);
+
+            const groups = svg.selectAll("g.stacks")
+                            .data(series)
+                            .enter()
+                            .append("g")
+                            .attr("class", "stacks") 
+                            .style("fill", (d,i)=> myColor(i));
+            
+            const bars = groups.selectAll("rect")
+                            .data(d=>d)
+                            .enter()
+                            .append("rect")
+                            .attr("x", d=> xScale(d.data.month))//see "stacked data" in console
+                            .attr("y", d=> yScale(d[1])) 
+                            .attr("height", d=> yScale(d[0])-yScale(d[1]))
+                            .attr("width", xScale.bandwidth());
+            
+            const bottomAxis = d3.axisBottom()
+                            .scale(xScale)
+                            .tickFormat(d3.timeFormat("%b"));;
+            
+            svg.append("g")
+                    .attr("class", "axis") 
+                    .attr("transform", "translate(0," + (h-margin) + ")") 
+                    .call(bottomAxis);
+                
+            const leftAxis = d3.axisLeft()
+                             .scale(yScale);
+                            
+            svg.append("g")
+               .attr("class", "axis") 
+               .attr("transform", "translate(" + margin + ",0)")
+               .call(leftAxis);   
+               
+               const columnsToPlot = ["num_small_dogs", "num_medium_dogs", "num_large_dogs"]; 
+
+                const legend = svg.selectAll(".legend")
+                    .data(columnsToPlot)
+                    .enter().append("g")
+                    .attr("class", "legend")
+                    .attr("transform", (d, i) => `translate(0,${i * 20})`); 
+
+                legend.append("rect")
+                    .attr("x", w - 18) 
+                    .attr("width", 18)
+                    .attr("height", 18)
+                    .style("fill", (d, i) => myColor(i)); 
+
+                legend.append("text")
+                    .attr("x", w - 24)
+                    .attr("y", 9)
+                    .attr("dy", ".35em")
+                    .style("text-anchor", "end")
+                    .text(d => d);  
+                            });
+
+        </script>
+    </body>
+</html>
