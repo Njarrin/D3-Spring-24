@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Word Analysis</title>
+  <script src= "https://d3js.org/d3.v7.min.js"></script>
+  <style type="text/css">
+    button {
+        margin: 5px; 
+        padding: 8px;
+        background-color: #ddd;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;}
+  </style>
+</head>
+<body>
+    <button id="wordCountButton">Word Count</button>
+    <button id="uniqueWordCountButton">Unique Word Count</button>
+    <button id="averageSentenceLengthButton">Average Sentence Length</button>
+  
+    <div id='chart'></div> <script type="text/javascript">
+    const w = 600;
+    const h = 600;
+    const margin = 80;
+    const myColor = d3.scaleOrdinal(d3.schemeTableau10);
+
+    let currentFeature = "wordCount"; 
+
+    d3.csv("FakeRealFinal.csv").then(data => {
+      data.forEach(d => {
+          d.wordCount = d.Text.split(' ').length;
+          d.uniqueWordCount = new Set(d.Text.split(' ')).size;
+          const totalWordLengths = d.Text.split(' ').map(word => word.length).reduce((a, b) => a + b, 0);
+          d.averageWordLength = totalWordLengths / d.wordCount;
+          
+          const sentences = d.Text.split(/[.?!]+/); 
+        const sentenceLengths = sentences.map(sentence => sentence.trim().split(' ').length); 
+        d.averageSentenceLength = d3.mean(sentenceLengths) || 0; 
+    });
+ 
+      const xScale = d3.scaleBand()
+          .domain(["Real", "Fake"]) 
+          .range([margin, w - margin])
+          .paddingInner(0.05);
+
+      const yScale = d3.scaleLinear()
+      .domain([0, d3.max(data, d => d[currentFeature])])
+    .range([h - margin, margin]) 
+    .nice();
+
+     const svg = d3.select("#chart") 
+          .append("svg")
+          .attr("width", w)
+          .attr("height", h);
+
+      const bars = svg.selectAll("g.bars") 
+          .data(data)
+          .enter()
+          .append("g") 
+          .attr("class", "bars") 
+          .attr("transform", d => `translate(${xScale(d.label)}, 0)`); 
+
+       bars.append("rect") 
+          .attr("x", xScale.bandwidth() / 2) 
+          .attr("width", xScale.bandwidth() / 2) 
+          .style("fill", (d,i) => myColor(d.label)); 
+
+      const bottomAxis = d3.axisBottom().scale(xScale);
+      svg.append("g")
+          .attr("class", "axis")
+          .attr("transform", "translate(0," + (h-margin) + ")")
+          .call(bottomAxis);
+
+      const leftAxis = d3.axisLeft().scale(yScale); 
+      svg.append("g")
+          .attr("class", "axis")
+          .attr("transform", "translate(" + margin + ",0)")
+          .call(leftAxis); 
+    
+    
+    d3.select("#wordCountButton").on("click", () => {
+          currentFeature = "wordCount";
+          console.log("currentFeature:", currentFeature);
+          updateVisualization();
+      }); 
+
+      d3.select("#uniqueWordCountButton").on("click", () => {
+          console.log("currentFeature:", currentFeature);
+          currentFeature = "uniqueWordCount";
+          updateVisualization();
+      }); 
+
+      d3.select("#averageSentenceLengthButton").on("click", () => {
+            currentFeature = "averageSentenceLength";
+            updateVisualization();
+        }); 
+
+      function updateVisualization() {
+        const yScale = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d[currentFeature])])  
+        .range([h - margin, margin]) 
+        .nice();
+        
+        
+        yScale.domain([0, d3.max(data, d => d[currentFeature])]); 
+            svg.select(".axis.y").transition().call(leftAxis); 
+
+         bars.selectAll("rect")
+                .attr("y", h - margin) 
+                .attr("height", 0)
+                .transition()
+                .duration(500)
+                .attr("y", d => yScale(d[currentFeature])) 
+                .attr("height", d => yScale(0) - yScale(d[currentFeature]));
+        }
+                svg.append("text")           
+            .attr("transform",
+                    "translate(" + (w/2) + " ," + 
+                                (h - margin + 30) + ")")
+            .style("text-anchor", "middle")
+            .text("News Type (Real/Fake)");
+
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin)
+                .attr("x", 0 - (h / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Word Count");
+
+            const legend = svg.selectAll(".legend")
+                .data(["Real", "Fake"]) 
+                .enter().append("g")
+                .attr("class", "legend")
+                .attr("transform", (d, i) => `translate(0,${i * 20})`);
+
+            legend.append("rect")
+                .attr("x", w - 18)
+                .attr("width", 18)
+                .attr("height", 18)
+                .style("fill", myColor);
+
+            legend.append("text")
+                .attr("x", w - 24)
+                .attr("y", 9)
+                .attr("dy", ".35em")
+                .style("text-anchor", "end")
+                .text(d => d);
+                });
+  </script>
+</body>
+</html>

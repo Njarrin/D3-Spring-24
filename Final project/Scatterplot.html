@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Final Scatterplot</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style type="text/css"> 
+  </style>
+</head>
+<body>
+  <h1>Fake News Analysis with Scatterplot</h1>
+  <script type="text/javascript">
+
+let tooltip = d3.select("body").append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0)    
+        .style("position", "absolute")
+        .style("text-align", "center")
+        .style("background-color", "black")
+        .style("border", "1px solid #ddd")
+        .style("padding", "8px");
+
+function showTooltip(event, d) {
+   tooltip.transition()
+        .duration(200)
+        .style("opacity", .9);
+    tooltip.html(d.Text)      
+        .style("left", (event.pageX + 10) + "px")   
+        .style("top", (event.pageY - 28) + "px");
+}
+
+function hideTooltip() {
+  tooltip.transition()        
+                   .duration(500)      
+                   .style("opacity", 0); 
+}
+
+  d3.csv("FakeRealFinal.csv").then(data => {
+
+    data.forEach(d => {
+    d.wordCount = d.Text.split(" ").length; 
+    d.label = (d.label === "Real") ? 1 : 0; 
+    d.sentenceLength = d.Text.split(/\.|\?|!/).length - 1;
+});
+      const svgWidth = 800;
+      const svgHeight = 800;
+
+      const svg = d3.select("body")
+          .append("svg")
+          .attr("width", svgWidth)
+          .attr("height", svgHeight);
+
+      const xScale = d3.scaleLinear()
+                       .domain(d3.extent(data, d => d.wordCount)) 
+                       .range([55, svgWidth - 60])
+                       .nice();
+
+      const xAxis = d3.axisBottom(xScale);
+                svg.append("g")
+                  .attr("transform", `translate(0, ${svgHeight - 50})`)
+                  .call(xAxis);
+
+    
+      const yScale = d3.scaleLinear()
+      .domain([0, 100]) 
+                 .range([svgHeight - 55, 80]);
+      
+      const yAxis = d3.axisLeft(yScale)
+                svg.append("g")
+                    .attr("transform", `translate(50, 0)`)
+                    .call(yAxis);  
+
+      const colorScale = d3.scaleOrdinal()
+                  .domain([0, 1])
+                  .range(["red", "blue"]); 
+      
+      tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0)   
+                .style("position", "absolute")
+                .style("text-align", "center")
+                .style("background-color", "white")
+                .style("border", "1px solid #ddd")
+                .style("padding", "8px");
+
+      svg.selectAll("circle.data-point")
+         .data(data)
+         .enter()
+         .append("circle")
+         .attr("class", "data-point") 
+         .attr("cy", d => yScale(d.sentenceLength))
+         .attr("r", 2.5)
+         .attr("fill", d => d.label === 1 ? "blue" : "red")
+         .attr("cx", d => xScale(d.wordCount))
+         .on("mouseover", showTooltip)          
+         .on("mouseout", hideTooltip)
+
+        .transition()
+                    .duration(10500)
+                    .attr("cx", d => xScale(d.wordCount))
+                    .attr("opacity",0.7)
+                    .style("stroke", "black")
+                    .style("stroke-width", .35)
+                    .end();
+
+      svg.append("text")             
+            .attr("class", "x-label") 
+            .attr("text-anchor", "middle") 
+            .attr("x", svgWidth / 2)     
+            .attr("y", svgHeight - 10)
+            .text("Word Count");
+
+      svg.append("text")
+            .attr("class", "y-label")  
+            .attr("text-anchor", "middle") 
+            .attr("x", -svgHeight / 2)    
+            .attr("y", 20)               
+            .attr("transform", "rotate(-90)") 
+            .text("Sentence Length")   
+            
+const legendReal = svg.append("g")
+    .attr("transform", `translate(${svgWidth - 120}, 20)`);
+
+legendReal.append("rect")
+    .attr("width", 18)
+    .attr("height", 18)
+    .style("fill", "blue");
+
+legendReal.append("text")
+    .attr("x", 24)
+    .attr("y", 9)
+    .attr("dy", ".35em")
+    .style("text-anchor", "start")
+    .text("Real");
+
+const legendFake = svg.append("g")
+    .attr("transform", `translate(${svgWidth - 120}, 50)`); 
+
+legendFake.append("rect")
+    .attr("width", 18)
+    .attr("height", 18)
+    .style("fill", "red");
+
+legendFake.append("text")
+    .attr("x", 24)
+    .attr("y", 9)
+    .attr("dy", ".35em")
+    .style("text-anchor", "start")
+    .text("Fake");         
+        });
+
+  </script>
+</body>
+</html>
