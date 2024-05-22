@@ -1,1 +1,1 @@
-
+I created an interactive chart that analyzes real and fake news. The chart shows how many words and sentences are in each news article. Real news is shown in blue, and fake news is shown in red. You can hover over each dot on the chart to see the full text of the article. I started with some basic instructions and then had to figure out how to load the data and calculate things like sentence length. There were some bumps along the way, but I fixed them by carefully checking my code and using online resources.
